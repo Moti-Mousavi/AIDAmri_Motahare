@@ -64,12 +64,32 @@ def updateB(Img, q, C, M, Bas,GGT,ImgG):
             A[ii, jj] = np.sum(B) # inner product
             A[jj, ii] = A[ii, jj]
 
-    w = np.dot(np.linalg.inv(A) , V)
-    b = np.zeros(Img.shape)
-    for kk in range (N_bas):
-        b = b + np.dot(w[kk] , Bas[:,:, kk])
+    try:
+        # Regularization: Add a small value to the diagonal
+        epsilon = 1e-8
+        A += np.eye(A.shape[0]) * epsilon
 
-    return b
+        # Attempt to invert the matrix
+        w = np.dot(np.linalg.inv(A), V)
+    except np.linalg.LinAlgError as e:
+        # Handle singular matrix
+        print(f"Matrix inversion error: {str(e)}")
+        print("Falling back to pseudo-inverse.")
+        w = np.dot(np.linalg.pinv(A), V)
+
+    # Calculate b using the weights
+    b = np.zeros(Img.shape)
+    for kk in range(N_bas):
+        b = b + np.dot(w[kk], Bas[:, :, kk])
+
+    return b       
+
+    #w = np.dot(np.linalg.inv(A) , V)
+    #b = np.zeros(Img.shape)
+    #for kk in range (N_bas):
+        #b = b + np.dot(w[kk] , Bas[:,:, kk])
+
+    #return b
 
 
 
