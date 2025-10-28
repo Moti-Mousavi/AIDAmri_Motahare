@@ -1,4 +1,24 @@
-#!/usr/bin/env python
+"""
+Created on 10/08/2017
+
+@author: Niklas Pallast
+Neuroimaging & Neuroengineering
+Department of Neurology
+University Hospital Cologne
+
+
+Documentation preface, added 23/05/09 by Victor Vera Frazao:
+This document is currently in revision for improvement and fixing.
+Specifically changes are made to allow compatibility of the pipeline with Ubuntu 18.04 systems 
+and Ubuntu 18.04 Docker base images, respectively, as well as adapting to appearent changes of 
+DSI-Studio that were applied since the AIDAmri v.1.1 release. As to date the DSI-Studio version 
+used is the 2022/08/03 Ubuntu 18.04 release.
+All changes and additional documentations within this script carry a signature with the writer's 
+initials (e.g. VVF for Victor Vera Frazao) and the date at application, denoted after '//' at 
+the end of the comment line. If code segments need clearance the comment line will be prefaced 
+by '#?'. Changes are prefaced by '#>' and other comments are prefaced ordinalrily 
+by '#'.
+"""
 
 # Motahare 31.03.2025 (changed for registration different Stroke_masks)
 
@@ -15,7 +35,7 @@ from pathlib import Path
 
 def remove_ext(path):
     """
-    Entfernt sicher '.nii.gz' oder '.nii' von einem Dateinamen.
+    remove '.nii.gz' oder '.nii' from dataname.
     """
     name = Path(path).name
     if name.lower().endswith('.nii.gz'):
@@ -137,51 +157,7 @@ def regABA2DTI(inputVolume, stroke_masks, refStroke_mask,
             print(f'Error while executing the command: {command_args} Error: {str(e)}')
             raise
    
-    # Process Stroke Masks (files ending with 'Stroke_mask.nii.gz')
-    """    
-        for mask in stroke_masks:
-            if os.path.exists(mask):
-                orig_base = Path(mask).name
-                mask_base = remove_ext(mask)
-                outputMask = os.path.join(outfile, mask_base + '.nii')
-                #command = f"reg_resample -ref {inputVolume} -flo {mask} -inter 0 -cpp {outputAff} -res {outputMask}"
-         
-                command = f"reg_resample -ref {inputVolume} -flo {mask} -inter 0 -trans {outputAff} -res {outputMask}"
-                command_args = shlex.split(command)
-                try:
-                    result = subprocess.run(command_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-                    print(f"Output of {command}:\n{result.stdout}")
-                except Exception as e:
-                    print(f'Error while executing the command: {command_args} Error: {str(e)}')
-                    raise
-                registered_stroke_masks.append((orig_base, outputMask))
 
-    # For each registered stroke mask, perform superposition with parental annotation and generate a scaled version for DSI Studio
-    for orig_base, reg_mask in registered_stroke_masks:
-        dataAnno = nii.load(outputAnnoSplit_par)
-        dataMask = nii.load(reg_mask)
-        imgAnno = dataAnno.get_fdata()
-        imgMask = dataMask.get_fdata()
-        # Create binary mask
-        imgMask[imgMask > 0] = 1
-        imgMask[imgMask == 0] = 0
-        superPosAnnoMask = imgMask * imgAnno
-        outAnnoMask = os.path.join(outfile, remove_ext(orig_base) + '_Anno.nii')
-        nii.save(nii.Nifti1Image(superPosAnnoMask, dataAnno.affine), outAnnoMask)
-    
-        # Create scaled version for DSI Studio
-        mask_base = remove_ext(orig_base)
-        outputMaskScaled = os.path.join(outfileDSI, mask_base + '_scaled.nii')
-        superPosFlipped = np.flip(superPosAnnoMask, 2)
-        scale = np.eye(4) * 10
-        scale[3][3] = 1
-        unscaledNiiDataMask = nii.Nifti1Image(superPosFlipped, dataMask.affine * scale)
-        nii.save(unscaledNiiDataMask, outputMaskScaled)
-        # Copy corresponding annotation text file
-        src_file = os.path.join(os.path.abspath(os.path.join(os.getcwd(), os.pardir, os.pardir)), 'lib', 'ARA_annotationR+2000.nii.txt')
-        dst_file = os.path.join(outfileDSI, mask_base + '_scaled.txt')
-        shutil.copyfile(src_file, dst_file)
-    """
     registered_stroke_masks = []
     if stroke_masks is not None and len(stroke_masks) > 0:
         # Process Stroke Masks (files ending with 'Stroke_mask.nii.gz')   
@@ -419,8 +395,7 @@ if __name__ == "__main__":
     for idx, img in enumerate(created_imgs):
         if img is None:
             continue
-        # Optionally, you can adjust orientation using an external script.
-        # os.system('python adjust_orientation.py -i ' + str(img) + ' -t ' + currentFile[0])
+        
         continue
 
     print("Registration completed")
